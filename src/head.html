@@ -1,0 +1,550 @@
+<title>Syx Pack</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one-screen app — header bar, tool/template/palette column left, tile canvas centre, inspector right (stacks on phones). Look follows Syx-Vis: deep slate, engraved gold, Palatino display. Single dark look by design. */
+:root {
+  color-scheme: dark;
+  --bg-deep: #0c1014;
+  --panel: #131b24;
+  --input: #0c1218;
+  --hover: rgba(220, 180, 100, 0.09);
+  --line: rgba(90, 105, 120, 0.28);
+  --line-ornate: rgba(180, 150, 85, 0.42);
+  --fg: #e2ddd0;
+  --fg-2: #b0a898;
+  --fg-3: #9a8e80;
+  --gold: #e0aa38;
+  --gold-hi: #f5c848;
+  --gold-glow: rgba(224, 170, 56, 0.16);
+  --good: #60b858;
+  --warn: #e0a040;
+  --bad: #d05a48;
+  --c-extraction: #5ab858; --c-husbandry: #48c8a0; --c-refining: #7070cc; --c-crafting: #d88848;
+  --c-military: #d04848; --c-service: #9870c8; --c-trade: #98c050; --c-infrastructure: #8a8a8a;
+  --font-display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: Consolas, "SF Mono", Menlo, monospace;
+}
+html, body { height: 100%; }
+body { background: var(--bg-deep); color: var(--fg); font-family: var(--font-body); font-size: 13px; overflow: hidden; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+header.bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--panel); border-bottom: 1px solid var(--line-ornate); }
+.brand { font-family: var(--font-display); font-size: 18px; color: var(--gold); letter-spacing: 0.02em; white-space: nowrap; }
+.brand small { font-family: var(--font-body); font-size: 11px; color: var(--fg-3); margin-left: 8px; letter-spacing: 0.04em; }
+.hgroup { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hgroup > label { color: var(--fg-3); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.spacer { flex: 1; }
+input[type=number], input[type=text], select, textarea { background: var(--input); border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px; }
+input[type=number] { width: 62px; font-variant-numeric: tabular-nums; }
+input[type=range] { accent-color: var(--gold); }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.btn { background: transparent; border: 1px solid var(--line-ornate); border-radius: 3px; padding: 4px 10px; cursor: pointer; color: var(--fg); white-space: nowrap; }
+.btn:hover { background: var(--hover); border-color: var(--gold); }
+.btn.primary { border-color: var(--gold); color: var(--gold-hi); }
+.btn.danger { border-color: rgba(208,90,72,.6); color: #e88a78; }
+.btn.sm { padding: 2px 7px; font-size: 12px; }
+.btn[aria-disabled=true] { opacity: .45; cursor: not-allowed; }
+.btn.on { background: var(--gold-glow); border-color: var(--gold); color: var(--gold-hi); }
+a.btn { text-decoration: none; display: inline-block; }
+main.work { display: grid; grid-template-columns: 280px 1fr 300px; min-height: 0; }
+aside { background: var(--panel); overflow-y: auto; min-height: 0; }
+aside.left { border-right: 1px solid var(--line-ornate); }
+aside.right { border-left: 1px solid var(--line-ornate); }
+.sec { padding: 12px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; min-width: 0; }
+.sec h2 { margin: 0; font-family: var(--font-display); font-weight: normal; font-size: 14px; color: var(--gold); letter-spacing: 0.03em; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sec h2 span { font-family: var(--font-body); font-size: 11px; color: var(--fg-3); }
+.sec h3 { margin: 4px 0 0; font-size: 11px; font-weight: normal; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.08em; }
+.tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.tool { display: grid; justify-items: center; gap: 2px; padding: 6px 0 4px; background: var(--input); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; min-width: 0; }
+.tool svg { width: 18px; height: 18px; stroke: var(--fg-2); fill: none; stroke-width: 1.6; }
+.tool span { font-size: 10px; letter-spacing: -0.01em; color: var(--fg-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool kbd { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-3); }
+.tool:hover { border-color: var(--line-ornate); }
+.tool.on { border-color: var(--gold); background: var(--gold-glow); }
+.tool.on svg { stroke: var(--gold-hi); } .tool.on span { color: var(--fg); }
+.search { width: 100%; }
+.cat { display: grid; gap: 1px; }
+.cat > button.cathead { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px 0; cursor: pointer; color: var(--fg-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.cat > button.cathead i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.cat > button.cathead b { margin-left: auto; font-weight: normal; color: var(--fg-3); }
+.bitem { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 3px; cursor: pointer; border: 1px solid transparent; background: none; width: 100%; text-align: left; }
+.bitem img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
+.bitem .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bitem .rad { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); }
+.wl { display: inline-block; width: 10px; height: 10px; border: 2px solid #6a6f76; border-radius: 1px; flex: none; vertical-align: -1px; }
+.bitem:hover { background: var(--hover); }
+.bitem.on { border-color: var(--gold); background: var(--gold-glow); }
+.tpl { display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; align-items: center; padding: 5px 7px; border: 1px solid var(--line); border-radius: 3px; background: none; cursor: pointer; text-align: left; width: 100%; min-width: 0; }
+.tpl b { font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpl small { color: var(--fg-3); font-size: 10.5px; grid-column: 1 / -1; }
+.tpl .sz { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); }
+.tpl:hover { border-color: var(--line-ornate); background: var(--hover); }
+.tpl.on { border-color: var(--gold); background: var(--gold-glow); }
+.tpls { display: grid; gap: 4px; }
+.sec > * { min-width: 0; }
+#bbInfo { display: grid; gap: 6px; }
+.bulklist { display: grid; gap: 3px; max-height: 260px; overflow-y: auto; margin-top: 2px; min-width: 0; }
+.bulklist .row { flex-wrap: nowrap; gap: 6px; font-size: 12px; min-width: 0; }
+.bulklist .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+label.btn { display: inline-block; }
+.tpl.th { grid-template-columns: 46px 1fr auto; }
+.tpl.th .thumb { grid-row: 1 / span 2; max-width: 44px; max-height: 44px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 2px; align-self: center; justify-self: center; }
+.tpl.th small { grid-column: 2 / -1; }
+#ovMode2 { margin-top: -2px; display: flex; width: 100%; }
+#ovMode2 button { flex: 1; padding: 4px 3px; font-size: 11.5px; }
+.help .card.wide { max-width: 1100px; }
+.techgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 14px; margin: 6px 0 4px; }
+.techgrid label { display: grid; grid-template-columns: 1fr 56px auto; gap: 6px; align-items: center; font-size: 12px; color: var(--fg-2); }
+.techgrid small { color: var(--fg-3); }
+.help details summary { cursor: pointer; color: var(--gold); font-family: var(--font-display); }
+.chainwrap { overflow: auto; max-height: 64vh; border: 1px solid var(--line); border-radius: 3px; background: #0b0f13; }
+.mine { display: grid; gap: 3px; }
+.mine .row { gap: 4px; flex-wrap: nowrap; }
+.mine select, .mine input { flex: 1; min-width: 0; font-size: 12px; padding: 2px 4px; }
+.tcat { display: grid; gap: 4px; }
+.tcat > button.tcathead { display: flex; align-items: center; gap: 7px; background: none; border: 0; padding: 3px 0; cursor: pointer; color: var(--fg-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; text-align: left; }
+.tcat > button.tcathead:hover { color: var(--fg); }
+.tcat > button.tcathead svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; flex: none; transition: transform .12s; }
+.tcat > button.tcathead[aria-expanded=true] svg { transform: rotate(90deg); }
+.tcat > button.tcathead b { margin-left: auto; font-weight: normal; color: var(--fg-3); font-family: var(--font-mono); letter-spacing: 0; }
+.gridgen { display: grid; gap: 6px; padding-top: 4px; }
+.capnote { font-size: 11.5px; color: var(--warn); margin: 4px 0 0; }
+.stage { position: relative; min-width: 0; min-height: 0; background: var(--bg-deep); overflow: hidden; }
+canvas#cv { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.legend { position: absolute; left: calc(10px + env(safe-area-inset-left, 0px)); bottom: 10px; background: rgba(12,16,20,.86); border: 1px solid var(--line-ornate); border-radius: 3px; padding: 6px 10px; display: flex; gap: 12px; align-items: center; font-size: 11px; color: var(--fg-2); pointer-events: none; flex-wrap: wrap; max-width: calc(100% - 20px); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.hint { position: absolute; right: 10px; top: 10px; background: rgba(12,16,20,.86); border: 1px solid var(--line-ornate); border-radius: 3px; padding: 5px 10px; font-size: 11.5px; color: var(--fg-2); pointer-events: none; max-width: 60%; }
+footer.status { display: flex; gap: 18px; padding-block: 4px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--panel); border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; min-height: 22px; }
+footer.status b { color: var(--fg-2); font-weight: normal; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; margin: 0; }
+.kv dt { color: var(--fg-3); } .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.selhead { display: flex; gap: 10px; align-items: center; }
+.selhead img { width: 32px; height: 32px; image-rendering: pixelated; }
+.selhead .t { font-family: var(--font-display); font-size: 15px; }
+.selhead .c { font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .08em; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.muted { color: var(--fg-3); font-size: 12px; line-height: 1.45; margin: 0; }
+.chk { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; font-size: 12px; }
+.chk input { accent-color: var(--gold); margin: 0; }
+.chk .r { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); background: none; border: 0; cursor: pointer; padding: 0; }
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: 74px 1fr 40px; gap: 8px; align-items: center; font-size: 12px; }
+.bar .track { height: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.bar .fill { height: 100%; display: block; }
+.bar .pct { text-align: right; font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line-ornate); border-radius: 3px; overflow: hidden; }
+.seg button { background: none; border: 0; padding: 4px 9px; cursor: pointer; color: var(--fg-2); font-size: 12px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--gold-glow); color: var(--gold-hi); }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.grid3 label { display: grid; gap: 2px; font-size: 10.5px; color: var(--fg-3); min-width: 0; }
+.grid3 input { width: 100%; }
+.plans { display: grid; gap: 4px; }
+.plan { display: grid; grid-template-columns: 1fr auto auto; gap: 4px; align-items: center; font-size: 12px; }
+.plan .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 6px; align-items: center; padding: 6px; border: 1px solid var(--line); border-radius: 3px; }
+.layer.act { border-color: var(--gold); }
+.layer img { width: 34px; height: 24px; object-fit: cover; border-radius: 2px; grid-row: span 2; image-rendering: pixelated; }
+.layer select { min-width: 0; width: 100%; font-size: 12px; padding: 2px 4px; }
+.layer .op { grid-column: 2 / -1; display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--fg-3); }
+.layer .op input { flex: 1; min-width: 0; }
+.layer input[type=checkbox] { accent-color: var(--gold); margin: 0; }
+.drop { position: relative; border: 1px dashed var(--line-ornate); border-radius: 3px; padding: 10px; text-align: center; color: var(--fg-3); font-size: 12px; cursor: pointer; display: block; }
+.drop:hover, .drop.over { border-color: var(--gold); color: var(--fg); background: var(--hover); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+textarea { width: 100%; height: 64px; font-family: var(--font-mono); font-size: 10.5px; resize: vertical; }
+.toast { z-index: 40 !important; position: fixed; left: 50%; bottom: calc(36px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--panel); border: 1px solid var(--gold); color: var(--fg); padding: 7px 14px; border-radius: 3px; font-size: 12.5px; z-index: 20; max-width: calc(100% - 32px); }
+.help[hidden], .toast[hidden] { display: none; }
+/* Einrichtungs-Editor */
+.help .card.furn { max-width: 1500px; width: 100%; height: 92vh; max-height: 92vh; overflow: hidden; padding: 0; gap: 0; grid-template-rows: auto 1fr; }
+.furnHead { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line-ornate); flex-wrap: wrap; }
+.furnHead h3 { margin: 0; }
+.furnHead kbd { font: 10px var(--font-mono); color: var(--fg-3); margin-left: 3px; }
+.furnHead .grow { flex: 1; min-width: 120px; color: var(--fg-3); font-size: 12px; }
+.furnBody { display: grid; grid-template-columns: 250px 1fr 270px; min-height: 0; }
+.furnGroups, .furnStats { overflow-y: auto; padding: 10px 12px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.furnGroups { border-right: 1px solid var(--line); }
+.furnStats { border-left: 1px solid var(--line); }
+.fgrp { display: grid; gap: 5px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 3px; }
+.fgrp.on { border-color: var(--gold); background: var(--gold-glow); }
+.fgrp .hd { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+.fgrp .sw { width: 12px; height: 12px; border-radius: 2px; flex: none; }
+.fgrp .ct { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+.fgrp .ct.bad { color: var(--bad); }
+.fgrp .sz { display: flex; flex-wrap: wrap; gap: 3px; }
+.fgrp .sz button { font: 11px var(--font-mono); padding: 2px 5px; border: 1px solid var(--line); background: var(--input); color: var(--fg-2); border-radius: 2px; cursor: pointer; }
+.fgrp .sz button.on { border-color: var(--gold); color: var(--gold-hi); }
+.fgrp small { color: var(--fg-3); font-size: 10.5px; }
+.furnStage { position: relative; min-width: 0; min-height: 0; background: #080b0e; }
+.furnStage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.fstat { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; }
+.fstat dd { margin: 0; font-family: var(--font-mono); text-align: right; }
+.fstat dt { color: var(--fg-2); }
+.ch { margin: 8px 0 2px; font: normal 13px var(--font-display); color: var(--gold); }
+.rcpick { display: grid; gap: 4px; }
+.rcpick label { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: start; font-size: 12px; color: var(--fg-2); cursor: pointer; }
+.rcpick small { color: var(--fg-3); }
+.prodbox { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 3px; }
+.prodbox .c { font: normal 13px var(--font-display); color: var(--gold); }
+.fwarn { margin: 0; padding: 0 0 0 16px; display: grid; gap: 4px; font-size: 12px; color: var(--fg-2); }
+.fwarn li.bad { color: var(--bad); } .fwarn li.warn { color: var(--warn); } .fwarn li.ok { color: var(--good); list-style: '✓ '; }
+.furnStats h4 { margin: 0; font: normal 13px var(--font-display); color: var(--gold); }
+@media (max-width: 900px) { .furnBody { grid-template-columns: 1fr; grid-template-rows: auto 55vh auto; } .furnGroups, .furnStats { border: 0; max-height: 30vh; } }
+.ctab { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.ctab th { text-align: left; font-weight: normal; color: var(--fg-3); font-size: 11px; padding: 2px 4px 4px 0; border-bottom: 1px solid var(--line); }
+.ctab td { padding: 3px 4px 3px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.ctab td.n, .ctab th.n { text-align: right; }
+.ctab tr.sum td { color: var(--fg); font-weight: 600; border-bottom-color: var(--line-ornate); }
+.ctab tr.sub td:first-child { padding-left: 12px; color: var(--fg-2); }
+.ctab input[type=number] { width: 58px; padding: 2px 4px; }
+.big { font-family: var(--font-display); font-size: 22px; color: var(--gold-hi); }
+.stale { color: var(--warn); font-size: 12px; margin: 0; }
+.lrow { display: grid; grid-template-columns: 70px 64px 1fr; gap: 6px; align-items: center; font-size: 12px; }
+.lrow input { width: 100%; padding: 2px 4px; }
+.lrow span.s { color: var(--fg-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.racegrid { display: grid; grid-template-columns: auto 1fr 64px; gap: 4px 8px; align-items: center; font-size: 12px; }
+.racegrid input[type=checkbox] { accent-color: var(--gold); margin: 0; }
+.racegrid input[type=number] { width: 100%; padding: 2px 4px; }
+.chkline { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.chkline input { accent-color: var(--gold); margin: 0; }
+.help { position: fixed; inset: 0; background: rgba(5,8,10,.7); display: grid; place-items: center; z-index: 30; padding: 16px; }
+.help .card { background: var(--panel); border: 1px solid var(--line-ornate); border-radius: 4px; max-width: 680px; width: 100%; max-height: 90%; overflow: auto; padding: 18px 22px; display: grid; gap: 12px; }
+.help h3 { margin: 0; font-family: var(--font-display); font-weight: normal; color: var(--gold); font-size: 17px; }
+.help table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.help td { padding: 3px 8px 3px 0; vertical-align: top; color: var(--fg-2); }
+.help td:first-child { white-space: nowrap; color: var(--fg); font-family: var(--font-mono); font-size: 11.5px; }
+.help p { margin: 0; color: var(--fg-2); line-height: 1.5; }
+/* Syx Pack v35: tool rail, tabs, build strip, zoom, quick search */
+[hidden] { display: none !important; }
+.brand .ver { font-family: var(--font-mono); font-size: 11px; color: var(--gold-hi); border: 1px solid rgba(224,170,56,.55); border-radius: 3px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; letter-spacing: 0; }
+.hsep { width: 1px; height: 22px; background: var(--line); flex: none; }
+.ib { width: 30px; height: 28px; padding: 0; display: inline-grid; place-items: center; }
+.ib svg, .btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.btn.ic { display: inline-flex; align-items: center; gap: 6px; }
+.hpop { position: relative; }
+.popover { position: absolute; left: 0; top: calc(100% + 6px); z-index: 25; width: 260px; padding: 12px; background: var(--panel); border: 1px solid var(--gold); border-radius: 4px; display: grid; gap: 8px; box-shadow: 0 8px 22px rgba(0,0,0,.55); }
+.popover .lbl { font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .08em; }
+.kbdh { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); border: 1px solid var(--line); border-radius: 2px; padding: 0 4px; }
+main.work { grid-template-columns: 62px 276px 1fr 312px; }
+nav.rail { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0; overflow-y: auto; min-height: 0; }
+.rt { width: 50px; height: 50px; display: grid; justify-items: center; align-content: center; gap: 2px; background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; color: var(--fg-2); padding: 0; flex: none; }
+.rt svg { width: 19px; height: 19px; stroke: var(--fg-2); fill: none; stroke-width: 1.6; }
+.rt span { font-size: 10px; line-height: 1; }
+.rt kbd { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-3); line-height: 1; }
+.rt:hover { border-color: var(--line-ornate); }
+.rt.on { background: var(--gold-glow); border-color: var(--gold); color: var(--gold-hi); }
+.rt.on svg { stroke: var(--gold-hi); }
+.rdiv { width: 34px; height: 1px; background: var(--line); margin: 4px 0; flex: none; }
+aside { display: flex; flex-direction: column; overflow: hidden; }
+.ptabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
+.ptabs button { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; padding: 11px 2px 9px; color: var(--fg-3); cursor: pointer; font-size: 12.5px; }
+.ptabs button:hover { color: var(--fg); }
+.ptabs button.on { color: var(--gold-hi); border-bottom-color: var(--gold); }
+.pane { overflow-y: auto; min-height: 0; flex: 1; }
+.recent { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 3px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); cursor: pointer; font-size: 12px; max-width: 100%; }
+.chip img { width: 16px; height: 16px; image-rendering: pixelated; }
+.chip:hover { border-color: var(--line-ornate); }
+.chip.on { border-color: var(--gold); }
+.bstrip { position: absolute; top: 10px; left: 10px; right: 10px; display: grid; justify-items: center; z-index: 5; pointer-events: none; }
+.bstrip > * { pointer-events: auto; max-width: 100%; box-sizing: border-box; }
+.bstrip[hidden], .popover[hidden], .bopts[hidden] { display: none; }
+.bmodes { display: flex; gap: 3px; padding: 4px; background: rgba(19,27,36,.97); border: 1px solid rgba(180,150,85,.55); border-radius: 6px; box-shadow: 0 6px 16px rgba(0,0,0,.45); flex-wrap: wrap; justify-content: center; }
+.bstrip.has .bmodes { border-radius: 6px 6px 0 0; }
+.bmode { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--fg-2); cursor: pointer; font-size: 12.5px; }
+.bmode svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.bmode kbd { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); border: 1px solid var(--line); border-radius: 2px; padding: 0 3px; }
+.bmode:hover { border-color: var(--line-ornate); }
+.bmode.on { background: var(--gold-glow); border-color: var(--gold); color: var(--gold-hi); }
+.bopts { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(12,18,24,.97); border: 1px solid rgba(180,150,85,.55); border-top: 0; border-radius: 0 0 6px 6px; box-shadow: 0 6px 16px rgba(0,0,0,.45); font-size: 12px; color: var(--fg-2); flex-wrap: wrap; justify-content: center; max-width: 100%; }
+.bopts .cur { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 3px; border: 1px solid rgba(224,170,56,.5); border-radius: 3px; color: var(--fg); background: none; cursor: pointer; }
+.bopts .cur img { width: 18px; height: 18px; image-rendering: pixelated; }
+.bopts .hs { color: var(--fg-3); font-size: 11.5px; }
+.bopts .vs { width: 1px; height: 20px; background: var(--line); }
+.num { min-width: 24px; height: 24px; padding: 0 5px; display: inline-grid; place-items: center; border: 1px solid var(--line); border-radius: 3px; background: var(--input); color: var(--fg-2); font-family: var(--font-mono); font-size: 12px; cursor: pointer; }
+.num:hover { border-color: var(--line-ornate); }
+.num.on { border-color: var(--gold); color: var(--gold-hi); background: var(--gold-glow); }
+.seg.sm button { padding: 3px 8px; }
+.hint { left: 0; right: 0; margin: 0 auto; width: fit-content; top: 10px; max-width: calc(100% - 40px); text-align: center; z-index: 4; }
+.hint:empty { display: none; }
+.shint { margin-top: 6px; background: rgba(12,16,20,.88); border: 1px solid var(--line); border-radius: 3px; padding: 4px 10px; font-size: 11.5px; color: var(--fg-2); text-align: center; pointer-events: none; }
+.shint[hidden] { display: none; }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: grid; gap: 2px; background: rgba(19,27,36,.95); border: 1px solid var(--line-ornate); border-radius: 4px; padding: 3px; z-index: 4; }
+.zoom button { width: 30px; height: 28px; display: grid; place-items: center; background: none; border: 0; border-radius: 3px; cursor: pointer; padding: 0; }
+.zoom button:hover { background: var(--hover); }
+.zoom svg { width: 16px; height: 16px; stroke: var(--fg-2); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.zoom output { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); text-align: center; padding: 1px 0; }
+.legend { max-width: calc(100% - 80px); }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 12.5px; align-items: center; margin: 2px 0 0; }
+.keys dt { font-family: var(--font-mono); font-size: 11px; color: var(--gold-hi); border: 1px solid var(--line-ornate); border-radius: 3px; padding: 1px 6px; justify-self: start; }
+.keys dd { margin: 0; color: var(--fg-2); }
+.cmd { position: fixed; inset: 0; background: rgba(5,8,10,.6); z-index: 35; display: grid; justify-items: center; align-items: start; padding: 12vh 16px 16px; }
+.cmd[hidden] { display: none; }
+.cmd .card { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--gold); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.6); overflow: hidden; display: grid; }
+.cmd input { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 12px 14px; font-size: 15px; background: var(--input); }
+.cmd input:focus-visible { outline: none; }
+.cmd ul { list-style: none; margin: 0; padding: 4px; max-height: 52vh; overflow-y: auto; }
+.cmd li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 13px; }
+.cmd li img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
+.cmd li .ki { width: 20px; flex: none; text-align: center; color: var(--fg-3); }
+.cmd li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd li small { color: var(--fg-3); font-size: 11px; }
+.cmd li.on { background: var(--gold-glow); color: var(--gold-hi); }
+.cmd .foot { padding: 6px 12px; border-top: 1px solid var(--line); font-size: 11px; color: var(--fg-3); }
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  main.work { grid-template-columns: 1fr; }
+  .stage { height: 62vh; order: -1; }
+  aside.left, aside.right { border: 0; border-top: 1px solid var(--line-ornate); overflow: visible; }
+  .hint { max-width: 90%; }
+  nav.rail { flex-direction: row; flex-wrap: wrap; justify-content: center; border-right: 0; }
+  aside { overflow: visible; }
+  .pane { overflow: visible; }
+}
+@media (prefers-reduced-motion: no-preference) { .tool, .btn, .bitem, .tpl { transition: background .12s, border-color .12s; } }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">Syx Pack<span class="ver" id="spVer">v35</span><small id="gameVer">Songs of Syx 0.71.44</small></div>
+    <span class="hsep"></span>
+    <div class="hpop">
+      <button class="btn ic" id="mapBtn" aria-expanded="false" aria-controls="mapPop" title="Map size">Map <span id="mapSizeTxt">–</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="popover" id="mapPop" hidden>
+        <span class="lbl">Map size in tiles</span>
+        <div class="row">
+          <input type="number" id="mapW" min="20" max="1024" value="190" aria-label="Width in tiles">
+          <span class="muted">×</span>
+          <input type="number" id="mapH" min="20" max="1024" value="106" aria-label="Height in tiles">
+          <button class="btn primary" id="applySize">Apply</button>
+        </div>
+        <div class="row"><button class="btn sm" id="mapFull" title="Full game map: 768 × 768 tiles">768 × 768</button><button class="btn sm" id="newMap">New map</button></div>
+        <p class="muted">“Apply” keeps the plan, “New map” clears it (Undo brings it back).</p>
+      </div>
+    </div>
+    <span class="hsep"></span>
+    <div class="hgroup">
+      <button class="btn ib" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/></svg></button>
+      <button class="btn ib" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3"/></svg></button>
+      <button class="btn ib" id="fitBtn" title="Fit map (F)" aria-label="Fit map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ic" id="cmdBtn" title="Search buildings, templates and commands (Ctrl+K)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4"/></svg>Search <span class="kbdh">Ctrl+K</span></button>
+    <button class="btn ic" id="hdrImport" title="Load a Better Blueprints line or file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 14v6h16v-6"/></svg>Import from game</button>
+    <button class="btn ic primary" id="hdrExport" title="Drag the area to export (X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 14v6h16v-6"/></svg>Export to game</button>
+    <button class="btn" id="helpBtn" title="?">Help ?</button>
+  </header>
+  <main class="work">
+    <nav class="rail" id="rail" aria-label="Tools"></nav>
+    <aside class="left">
+      <div class="ptabs" role="tablist" id="lTabs"><button data-t="b" role="tab">Buildings</button><button data-t="t" role="tab">Templates</button></div>
+      <div class="pane" id="lp-b">
+        <section class="sec">
+          <h2>Buildings <span id="bCount"></span></h2>
+          <input type="text" class="search" id="bSearch" placeholder="Search buildings …" aria-label="Search buildings">
+          <div id="recentBox" hidden><h3>Recent</h3><div class="recent" id="recent"></div></div>
+          <p class="muted"><span class="wl"></span> gets a wall ring, +1 tile per side</p>
+          <div id="palette"></div>
+        </section>
+      </div>
+      <div class="pane" id="lp-t" hidden>
+        <section class="sec">
+          <h2>Templates <span>T stamps, R rotates</span></h2>
+          <input type="text" class="search" id="tSearch" placeholder="Search templates …" aria-label="Search templates">
+          <div class="row"><button class="btn sm" id="tCap">Capture new (K)</button><button class="btn sm" id="tCopy">Copy area (V)</button></div>
+          <div id="capForm" hidden></div>
+          <div id="tplCats"></div>
+          <div id="gridGen" class="gridgen">
+            <h3>Grid generator</h3>
+            <p class="muted">Blocks 37 × 37 like “Grid 37 × 37”: inner streets at 14 and 22. With street width 1, neighbouring blocks share the edge street; wider gives main streets between the blocks.</p>
+            <div class="grid3">
+              <label for="sNx">Blocks ↔<input type="number" id="sNx" min="1" max="20" value="2"></label>
+              <label for="sNy">Blocks ↕<input type="number" id="sNy" min="1" max="20" value="2"></label>
+              <label for="sK">Street width<input type="number" id="sK" min="1" max="9" value="1"></label>
+            </div>
+            <div class="chkline"><input type="checkbox" id="sRim" checked><label for="sRim">Outer edge equally wide (else 1)</label></div>
+            <p class="muted">Area <output id="sFoot">73 × 73</output> tiles</p>
+            <button class="btn" id="gridStamp">Stamp this grid</button>
+          </div>
+        </section>
+      </div>
+    </aside>
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="bstrip" id="bstrip" hidden><div class="bmodes" id="bModes" role="toolbar" aria-label="Build"></div><div class="bopts" id="bOpts" hidden></div><div class="shint" id="bHint" hidden></div></div>
+      <div class="hint" id="hint"></div>
+      <div class="legend" id="legend"></div>
+      <div class="zoom" id="zoomBox">
+        <button id="zIn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <output id="zVal" title="Pixels per tile">–</output>
+        <button id="zOut" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <button id="zFit" title="Fit map (F)" aria-label="Fit map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+      </div>
+    </div>
+    <aside class="right">
+      <div class="ptabs" role="tablist" id="rTabs"><button data-t="sel" role="tab">Inspect</button><button data-t="views" role="tab">Views</button><button data-t="eco" role="tab">Economy</button><button data-t="plan" role="tab">Plan</button></div>
+      <div class="pane" id="rp-sel">
+        <section class="sec">
+          <h2>Selection</h2>
+          <div id="selBody"></div>
+        </section>
+      </div>
+      <div class="pane" id="rp-views" hidden>
+        <section class="sec">
+          <h2>Map view <span>walking distance, key H</span></h2>
+          <div class="seg" id="ovMode">
+            <button data-m="off">Off</button>
+            <button data-m="cov">Coverage</button>
+            <button data-m="dist">Distance</button>
+            <button data-m="load">Load</button>
+          </div>
+          <div class="seg" id="ovMode2">
+            <button data-m="iso">Isolation</button>
+            <button data-m="maint">Upkeep</button>
+            <button data-m="shape">Roundness</button>
+            <button data-m="commute">Commute</button>
+            <button data-m="stock">Storage</button>
+          </div>
+          <div class="chk" id="groups"></div>
+          <p class="muted" id="ovNote"></p>
+          <div id="loadBox"></div>
+        </section>
+        <section class="sec">
+          <h2>Background layers <span>screenshots</span></h2>
+          <label class="drop" id="drop" for="layerFile">Drop a screenshot here or click<br><small>map, soil, moisture … several allowed</small><input type="file" id="layerFile" accept="image/*" multiple></label>
+          <div class="tpls" id="layers"></div>
+          <div id="alignBox"></div>
+          <p class="muted">“Align” lets you drag the layer on the map (key A while a layer exists). Layers stay saved in this browser. They are not part of the plan code.</p>
+        </section>
+      </div>
+      <div class="pane" id="rp-eco" hidden>
+        <section class="sec">
+          <h2>Supply <span>share served</span></h2>
+          <div class="row"><div class="seg" id="covWho"><button data-w="home">Homes</button><button data-w="work">Workplaces</button></div></div>
+          <div class="bars" id="covBars"></div>
+        </section>
+        <section class="sec">
+          <h2>Demand <span>residents and goods</span></h2>
+          <div class="row"><button class="btn primary" id="calcBtn">Recalculate</button><span class="muted" id="calcStamp"></span></div>
+          <div id="calcBody"></div>
+        </section>
+        <section class="sec">
+          <h2>Bonuses &amp; climate <span>output of workplaces</span></h2>
+          <div id="boBody"></div>
+        </section>
+        <section class="sec">
+          <h2>Analyses <span>chains, paths, roundness</span></h2>
+          <div id="anaBody"></div>
+        </section>
+      </div>
+      <div class="pane" id="rp-plan" hidden>
+        <section class="sec">
+          <h2>Plan</h2>
+          <dl class="kv" id="planStats"></dl>
+        </section>
+        <section class="sec">
+          <h2>Save &amp; share</h2>
+          <div class="row"><input type="text" id="planName" placeholder="Plan name" aria-label="Plan name" style="flex:1;min-width:0"><button class="btn primary" id="saveBtn">Save</button></div>
+          <div class="plans" id="plans"></div>
+          <div class="row"><button class="btn" id="copyCode">Copy plan code</button><button class="btn" id="loadCode">Load code</button><button class="btn" id="cmpBtn">Compare plans</button></div>
+          <textarea id="codeBox" aria-label="Plan code" placeholder="Paste a plan code here and click “Load code”"></textarea>
+          <p class="muted">Saved plans live only in this browser. The plan code also contains your own templates.</p>
+        </section>
+        <section class="sec" id="importSec">
+          <h2>Import from game <span>Better Blueprints</span></h2>
+          <textarea id="bbBox" aria-label="Better Blueprints line" placeholder="Line from the game (starts with “SYX:BB”) or several lines"></textarea>
+          <div class="row"><button class="btn" id="bbLoad">Load line</button><label class="btn" for="bbFile" title="AreaBlueprints.json from the mod folder or SavedPrints from the game profile">Load file …</label><input type="file" id="bbFile" accept=".json,.txt,text/plain,application/json" hidden></div>
+          <p class="muted">Many blueprints at once: load <code>AreaBlueprints.json</code> from Better Blueprints (in the mod folder) or <code>SavedPrints</code> (in the game profile), or paste several lines. All of them become your own templates in one category.</p>
+          <div id="bbInfo" hidden></div>
+        </section>
+      </div>
+    </aside>
+  </main>
+  <footer class="status" id="status"></footer>
+</div>
+<div class="cmd" id="cmdDlg" hidden>
+  <div class="card" role="dialog" aria-label="Quick search">
+    <input type="text" id="cmdIn" placeholder="Building, template or command …" aria-label="Search" autocomplete="off">
+    <ul id="cmdList" role="listbox"></ul>
+    <div class="foot">↑ ↓ choose · Enter runs · Esc closes</div>
+  </div>
+</div>
+<div class="help" id="expDlg" hidden>
+  <div class="card" role="dialog" aria-label="Export to the game">
+    <h3>Export to the game</h3>
+    <div id="expBody" style="display:grid;gap:10px"></div>
+  </div>
+</div>
+<div class="help" id="furnDlg" hidden>
+  <div class="card furn" role="dialog" aria-label="Furnish room">
+    <div class="furnHead"><h3 id="furnTitle">Furnish room</h3><div class="row" id="furnModes" style="gap:4px;margin:0"></div><span class="grow" id="furnHint"></span><button class="btn primary" id="furnAuto" title="Fills the room with furniture (A). Size, placed furniture and doors stay.">Auto-furnish</button><button class="btn danger" id="furnClear">Remove all</button><button class="btn primary" id="furnClose">Done</button></div>
+    <div class="furnBody"><div class="furnGroups" id="furnGroups"></div><div class="furnStage" id="furnStage"><canvas id="furnCv"></canvas></div><div class="furnStats" id="furnStats"></div></div>
+  </div>
+</div>
+<div class="help" id="techDlg" hidden>
+  <div class="card wide" role="dialog" aria-label="Technologies"><h3>Technologies</h3><div id="techBody" style="display:grid;gap:8px"></div></div>
+</div>
+<div class="help" id="chainDlg" hidden>
+  <div class="card wide" role="dialog" aria-label="Production chain"><h3>Production chain</h3><div id="chainBody" style="display:grid;gap:8px"></div></div>
+</div>
+<div class="help" id="cmpDlg" hidden>
+  <div class="card wide" role="dialog" aria-label="Compare plans"><h3>Compare plans</h3><div id="cmpBody" style="display:grid;gap:8px"></div></div>
+</div>
+<div class="help" id="help" hidden>
+  <div class="card" role="dialog" aria-label="Help">
+    <h3>Layout</h3>
+    <p>The <b>tool rail</b> on the far left holds Select, Pan, Build, Copy, Stamp, Capture and Export. <b>Build</b> opens the strip on top of the map with its modes Room, Road, Wall, Door, Ceiling and Erase; the second row of the strip shows the options of the current mode, e.g. house type and number of houses. The left panel has the tabs <b>Buildings</b> and <b>Templates</b>, the right panel <b>Inspect</b> (selection), <b>Views</b> (map views, background layers), <b>Economy</b> (supply, demand, costs, bonuses, analyses) and <b>Plan</b> (save, plan code, import). <b>Ctrl+K</b> searches buildings, templates and commands. Zoom buttons sit at the bottom right of the map, the status bar shows tool, selection and the tile under the mouse.</p>
+    <h3>Shortcuts</h3>
+    <table>
+      <tr><td>Q</td><td>Select and move. Double-clicking a building opens “Furnish room”. Del deletes, Ctrl+click picks up type and size as a stamp. <b>Multiple selection:</b> dragging a rectangle on empty ground selects all buildings that lie inside it including their wall, plus roads, walls and ceilings in the rectangle. Shift+click adds or removes a building, Shift+rectangle adds an area. Dragging the selection moves everything in it, arrow keys move by 1 tile (Shift: 10), R rotates around the centre, Del deletes, Esc clears the selection. Arrow keys and R also work on a single building. Every action is one undo step.</td></tr>
+      <tr><td>B</td><td>Build: opens the build strip in the mode you used last.</td></tr>
+      <tr><td>D</td><td>Room: drag a building by its <b>inner size</b>. Houses and fixed-size rooms (hearth, well, speaker, stage, shrine, monuments …) are placed by click as in the game: choose the shape in the build strip (for houses Apartment, House, Longhouse and 1 to 9 houses per row), <b>E</b> one step larger or one house more, <b>Q</b> smaller or one house less, <b>R</b> rotates, Esc ends. Red dashed means: this size does not exist in the game. The planner adds the wall ring wherever the game builds one. Dragging into a room of the same type or into its wall extends it, also to free shapes.</td></tr>
+      <tr><td>S / M</td><td>Drag a road or a free wall as a rectangle.</td></tr>
+      <tr><td>W</td><td>Set a door: click a tile of the wall ring (not a corner). For buildings without a wall: the tile right next to it.</td></tr>
+      <tr><td>C</td><td>Drag a ceiling as a rectangle: a roof without a room, e.g. for covered paths in front of doors. Works on free ground and roads, not on rooms, wall rings or walls. Erase (E) removes it again.</td></tr>
+      <tr><td>E</td><td>Erase: takes tiles out of rooms. Erasing the wall row moves the wall one row inwards. If a room falls apart, several rooms appear. Roads and walls in the rectangle disappear as well. Fixed-size rooms disappear completely when erased. Delete whole buildings with Q and Del.</td></tr>
+      <tr><td>T</td><td>Stamp a template, R rotates it by 90°. If something already stands there, the planner places only the buildings that are free; what exists stays unchanged. Buildings of the template that are skipped are marked red, identical buildings at the same position are not shown at all. Roads and walls of the template only go on free tiles. That way a blueprint from the game can be aligned with the existing buildings and only fills the gaps. The templates are in the Templates tab in categories; clicking a category name opens or closes it, the search field filters all of them. Built in is the kit for blocks 37 × 37 (corners 13 × 13, strips 7 × 13, centre 7 × 7). The grid generator lays out any number of blocks, the street between the blocks is 1 to 9 tiles wide (inner streets stay 1 wide). All parts lie like the top-left corner or the top strip, R turns them into the other positions. Stamp decor corners and workshops onto the residential corner or the plot, with the same number of rotations. Assign your own templates to a category with the drop-down below the template.</td></tr>
+      <tr><td>V</td><td>Copy: drag an area, then stamp right away (R rotates, every click places a copy). Nothing is saved; for a lasting template use “Capture” (K). Taken along are roads, walls, ceilings and buildings with doors and furniture that lie inside the frame including their wall.</td></tr>
+      <tr><td>K</td><td>Capture: drag an area and save it as your own template, with name and category (an existing one or a new name). Taken along are roads, walls, ceilings and buildings with doors and furniture that lie inside the frame including their wall. If the area is just a rotation of an existing template, the planner says so.</td></tr>
+      <tr><td>X</td><td>Export: drag an area and copy it as a blueprint line for the mod “Better Blueprints”. Also via “Export to game” in the header.</td></tr>
+      <tr><td>A</td><td>Align layer: move the active background layer with the mouse (also with “Align” in the Views tab).</td></tr>
+      <tr><td>Esc / right click</td><td>Ends the current tool and switches to Select (Q). Holding the right mouse button and dragging still moves the map.</td></tr>
+      <tr><td>R / H / F</td><td>Rotate / toggle map view / fit map.</td></tr>
+      <tr><td>Ctrl+Z / Ctrl+Y</td><td>Undo / redo.</td></tr>
+      <tr><td>Ctrl+K</td><td>Quick search: buildings, templates and commands. ↑ ↓ choose, Enter runs.</td></tr>
+      <tr><td>Mouse wheel</td><td>Zoom. Right or middle mouse button, space bar or Pan: move the map.</td></tr>
+    </table>
+    <h3>Furnish room</h3>
+    <p>Select a building, then “Furnish room” (or double-click). Choose a size on the left, clicking in the room places the furniture piece. <b>E</b> takes the next larger, <b>Q</b> the next smaller variant, <b>R</b> rotates. For furniture that raises efficiency, the gain is shown in brackets. Right click or Del removes the piece under the mouse. At the top you switch between <b>Furniture</b> (D), <b>Room</b> (F), <b>Door</b> (W) and <b>Support</b> (S). In Room mode a rectangle dragged with the left button adds tiles, with the right button it removes tiles; around the room you see neighbouring buildings, roads and walls. A support takes a room tile out, the game builds a wall there that carries the roof; tiles marked yellow are too far from a wall. Clicking a group name chooses the smallest size. <b>Auto-furnish</b> (A) fills the room with the optimiser from Syx-Vis: room size, furniture already placed and doors stay; without doors it suggests some, and where the ceiling needs them it places supports. The rules (reachable work places, do not cut the room apart) and the values come from the Syx-Vis room planner, converted to the game data v71.</p>
+    <h3>Walls</h3>
+    <p>Rooms that get walls in the game (workshops, warehouses, houses, lavatory, restaurant …) get a ring of one tile, also around corners. Hearth, well, food stall, speaker, stage, shrines, mines and most fields stay without a wall. Mushroom farm and Balti pasture are indoor rooms and get a wall. Neighbouring rooms may share a wall. Houses of all types may even touch directly without a wall in between, as in the game; the wall ring then only runs around the outside of the group. Their entrances must stay free. For noise protection, drag a second row with the Wall mode.</p>
+    <p>Ceilings: some races dislike hard corners and long straight walls (“Roundness”). Covered tiles in front of doors or at corners round the buildings off. The map view “Roundness” shows the effect.</p>
+    <p>Isolation as in the game: every door in the wall ring is a gap. A room has one tenth of its edge tiles as free gaps (rounded up), so a room of 17 × 5 has 4. Each further door lowers the isolation, and upkeep jobs and upkeep material rise by 1 + 2 × (1 − isolation). Auto-furnish suggests at most as many doors as are free.</p>
+    <h3>Reach</h3>
+    <p>Counted are walked tiles in four directions from the doors. Without doors the planner assumes an access on every side. Walls, free walls and rooms block, fields are walkable. Radii from the game data (v71). The game calculates more finely, the values are a planning measure.</p>
+    <h3>Export to the game</h3>
+    <p>The export creates an area blueprint for the mod “Better Blueprints”: all rooms with wall ring and doors, roads as a build order with the chosen paving, free walls and ceilings. The mod builds walls and ceilings only with the wall option switched on, in the material chosen there. Houses exist in the game only as Apartment (3 × 3), House (3 × 5) and Longhouse (5 × 6) and rows of them without walls in between; the planner puts the doors at the entrances. Rooms that are just one fixed furniture piece in the game (hearth, well, speaker, stage, shrines, monuments, watchtower, hauler …) are exported only in game sizes and bring the furniture piece along. The throne stays out. Furnished rooms bring their furniture, all other rooms arrive empty and are furnished in the game.</p>
+    <h3>Import from the game</h3>
+    <p>“Import from game” in the header opens the Plan tab. “Load line” reads a line from Better Blueprints (area or single room, copied in the game with “Export blueprint to clipboard string”). It becomes a stamp like Copy: click places, R rotates, “Save as template” adds it to your templates. Included are rooms with their shape, doors, furniture and recipe, plus roads, free walls and ceilings. Not included are road paving, wall material, upgrade levels and other build orders (fences, fortifications). Rooms the planner does not know are skipped and named. “Load file …” reads the whole Better Blueprints collection at once: <code>AreaBlueprints.json</code> (areas, in the mod folder below the game version) or <code>SavedPrints</code> (single rooms, in the game’s profile folder). The planner lists all entries, each can be stamped directly, “Save all as templates” puts them into one category of your templates (default “Better Blueprints”). What already exists as a template is skipped. Several pasted SYX:BB lines work the same way. Canals are single tiles in the game; the planner joins neighbouring canal tiles into one canal.</p>
+    <h3>Costs and upkeep</h3>
+    <p>“Recalculate” in the Economy tab shows below the balance the construction costs of the plan per resource: furniture by size, area costs, upgrade level and the surcharge for tiles far away from a wall (up to × 3, supports help). Plus walls (wood and stone 2, grand 3 per tile) and ceilings over rooms, doors and free ceilings (wood and stone 1, grand 2) in the chosen material, roads in the chosen paving. The planner does not calculate the foundation (a few percent depending on the position). Upkeep per day (jobs and material) depends on area, furniture and isolation; next to it is the estimated janitor capacity. The selection shows costs and upkeep per room, plus the upgrade level. The map views “Isolation” and “Upkeep” colour the rooms.</p>
+    <h3>Bonuses &amp; climate</h3>
+    <p>Technologies, tools, race of the workers, religion, noble offices, climate and upgrade level change the output of workplaces as in the game: (1 + upgrade + tool + tech + noble office + religion) × race × climate. Consumption techs lower consumption. The selection shows the factor in the row “Bonuses”, the balance includes it.</p>
+    <h3>Analyses</h3>
+    <p>“Production chain” shows the flow of goods between the workplaces, bottlenecks in red. “Commute” colours workplaces by the path from the nearest house, “Storage” colours workplaces by the path to the nearest warehouse; both with the loss factor from the game code and an adjustable walking speed. “Roundness” shows where the roads count as round or square: stepped walls round, straight walls from 5 tiles make square.</p>
+    <h3>Comfort</h3>
+    <p>Templates show a small preview. “Copy furnishing to identical rooms” (in the selection of a furnished room) copies furniture and doors to all rooms of the same type and shape, also rotated. “Compare plans” puts the saved plans side by side: residents, workers, construction costs, upkeep, bottlenecks.</p>
+    <h3>Load and demand</h3>
+    <p>“Load” assigns every house per service to the nearest reachable building and counts how many residents each building serves. If you enter “residents per building” for a service, overloaded buildings and the houses at them are coloured. Demand estimates the residents (1 per 3 inner tiles, adjustable per house size) and calculates food, drinks and clothing per day from the need rates of the game data. “Recalculate” updates both.</p>
+    <h3>Production</h3>
+    <p>For workplaces the selection shows workers, output and consumption per day. Workshops, refineries and hunters count their workers from the furniture, fields from the area (1 worker per 82 tiles, as in the game code), pastures from area and soil. For fields and plantations you enter soil and moisture in percent (default 100 %); the yield is calculated with soil × (0.05 + moisture × irrigation bonus). Mines and woodcutters are estimated, fisheries need a worker count by hand; “Workers by hand” overrides any estimate. “Recalculate” shows the balance: produced, consumed by workshops, demand of the residents and balance per good, plus jobs against residents.</p>
+    <h3>Background</h3>
+    <p>Load screenshots of the map and of the soil or moisture view in the Views tab. Align every layer with X, Y and “Pixels/tile”, or drag it into place with “Align” (A). A super screenshot (square, a multiple of 768 pixels, e.g. 6144 × 6144) is recognised and laid onto the map with 768 × 768 tiles. “Shrink to 1 px per tile” saves memory, a shrunk image with 768 × 768 pixels fits directly.</p>
+    <p>Data from the game files v71, read with the script from Syx-Vis. The room rules of the furnishing editor come from the Syx-Vis room planner (nobody0, MIT licence).</p>
+    <div class="row"><button class="btn primary" id="helpClose">Close</button></div>
+  </div>
+</div>
+
